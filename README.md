@@ -21,14 +21,7 @@ It is useful for people renting out houses with furniture already in-place , thi
 - Generate Reports in PDF or CSV format
 - Settings
 - Create Backups
-
-- Dashboard of Overall details
-- Item list with sorting and filtering by categories and tags
-- Item Details
-- Search by item
-- Add / Edit item
-- Generate Reports in PDF or CSV format
-- Create backups
+- Logout
 
 # Tech Stack
 
