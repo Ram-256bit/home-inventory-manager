@@ -28,3 +28,14 @@ It is useful for people renting out houses with furniture already in-place , thi
 - Frontend: React
 - Backend: Go
 - Database: Mongodb
+
+# Wireframe diagrams
+
+## Landing Page
+![a](./readme_images/landing_page.png)
+## Login Page
+![a](./readme_images/login_page.png)
+## Signup page
+![a](./readme_images/signup_page.png)
+## List Houses
+![a](./readme_images/list_houses.png)
