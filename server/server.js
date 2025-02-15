@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const PDFDocument = require("pdfkit"); // Install pdfkit: npm install pdfkit
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -13,7 +14,7 @@ let users = [
   {
     id: 1,
     email: "user@example.com",
-    password: "password", // In production, NEVER store plain text passwords.
+    password: "password",
   },
 ];
 
@@ -35,7 +36,6 @@ let items = [
     house: "House 1",
   },
 ];
-
 // Routes
 
 // Login route
@@ -100,6 +100,37 @@ app.get("/reports", (req, res) => {
 // Backup route (returns current items)
 app.get("/backup", (req, res) => {
   res.json({ success: true, backup: items });
+});
+
+// PDF Report Endpoint
+app.get("/reports/pdf", (req, res) => {
+  const doc = new PDFDocument();
+  let filename = "items-report.pdf";
+
+  // Set response headers for file download
+  res.setHeader(
+    "Content-disposition",
+    'attachment; filename="' + filename + '"',
+  );
+  res.setHeader("Content-type", "application/pdf");
+
+  // Pipe the PDF into the response
+  doc.pipe(res);
+
+  // Add content to PDF
+  doc.fontSize(20).text("Items Report", { align: "center" });
+  doc.moveDown();
+
+  items.forEach((item) => {
+    doc.fontSize(12).text(`Name: ${item.name}`);
+    doc.fontSize(12).text(`Category: ${item.category}`);
+    doc.fontSize(12).text(`Description: ${item.description}`);
+    doc.fontSize(12).text(`Photo URL: ${item.photo}`);
+    doc.moveDown();
+  });
+
+  // Finalize PDF file
+  doc.end();
 });
 
 // Start server
