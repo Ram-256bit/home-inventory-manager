@@ -1,12 +1,12 @@
-const express = require("express");
-const cors = require("cors");
-const PDFDocument = require("pdfkit"); 
+import express, { json } from "express";
+import cors from "cors";
+import PDFDocument from "pdfkit";
 
 const app = express();
 const port = process.env.PORT || 5000;
 
 app.use(cors());
-app.use(express.json());
+app.use(json());
 
 let users = [
   {
