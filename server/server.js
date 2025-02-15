@@ -1,19 +1,18 @@
 const express = require("express");
 const cors = require("cors");
+const PDFDocument = require("pdfkit"); 
 
 const app = express();
 const port = process.env.PORT || 5000;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Dummy in-memory data stores
 let users = [
   {
     id: 1,
     email: "user@example.com",
-    password: "password", // In production, NEVER store plain text passwords.
+    password: "password",
   },
 ];
 
@@ -35,10 +34,8 @@ let items = [
     house: "House 1",
   },
 ];
-
 // Routes
 
-// Login route
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
   const user = users.find((u) => u.email === email && u.password === password);
@@ -49,7 +46,6 @@ app.post("/login", (req, res) => {
   }
 });
 
-// Signup route
 app.post("/signup", (req, res) => {
   const { email, password } = req.body;
   if (users.find((u) => u.email === email)) {
@@ -62,13 +58,10 @@ app.post("/signup", (req, res) => {
   res.json({ success: true, user: { id: newUser.id, email: newUser.email } });
 });
 
-// Get houses route (dummy list)
 app.get("/houses", (req, res) => {
   res.json(["House 1", "House 2", "House 3"]);
 });
 
-// Get items route
-// Optionally filter by house using query param: /items?house=House%201
 app.get("/items", (req, res) => {
   const { house } = req.query;
   if (house) {
@@ -78,7 +71,6 @@ app.get("/items", (req, res) => {
   }
 });
 
-// Add item route
 app.post("/items", (req, res) => {
   const { name, category, description, photo, house } = req.body;
   if (!name || !category || !description || !photo || !house) {
@@ -91,18 +83,40 @@ app.post("/items", (req, res) => {
   res.json({ success: true, item: newItem });
 });
 
-// Generate report route (dummy)
 app.get("/reports", (req, res) => {
-  // In a real-world scenario, you might generate a PDF or CSV.
   res.json({ success: true, message: "Report generated" });
 });
 
-// Backup route (returns current items)
 app.get("/backup", (req, res) => {
   res.json({ success: true, backup: items });
 });
 
-// Start server
+app.get("/reports/pdf", (req, res) => {
+  const doc = new PDFDocument();
+  let filename = "items-report.pdf";
+
+  res.setHeader(
+    "Content-disposition",
+    'attachment; filename="' + filename + '"',
+  );
+  res.setHeader("Content-type", "application/pdf");
+
+  doc.pipe(res);
+
+  doc.fontSize(20).text("Items Report", { align: "center" });
+  doc.moveDown();
+
+  items.forEach((item) => {
+    doc.fontSize(12).text(`Name: ${item.name}`);
+    doc.fontSize(12).text(`Category: ${item.category}`);
+    doc.fontSize(12).text(`Description: ${item.description}`);
+    doc.fontSize(12).text(`Photo URL: ${item.photo}`);
+    doc.moveDown();
+  });
+
+  doc.end();
+});
+
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });

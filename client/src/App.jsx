@@ -8,7 +8,6 @@ function App() {
   const [house, setHouse] = useState(null);
   const [items, setItems] = useState([]);
 
-  // When the dashboard is active and a house is selected, fetch its items
   useEffect(() => {
     if (view === "dashboard" && house) {
       fetchItems();
@@ -456,13 +455,24 @@ function AddItem({ addItem }) {
 }
 
 function ReportGenerator() {
-  const generateReport = async (format) => {
+  const generatePDFReport = async () => {
     try {
-      const res = await fetch(`${BASE_URL}/reports`);
-      const data = await res.json();
-      alert(data.message);
+      const res = await fetch(`${BASE_URL}/reports/pdf`);
+      if (!res.ok) {
+        throw new Error("Failed to generate PDF");
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "items-report.pdf";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("Error generating report:", error);
+      console.error("Error generating PDF:", error);
+      alert("Error generating PDF report.");
     }
   };
 
@@ -472,15 +482,9 @@ function ReportGenerator() {
       <div className="flex gap-4">
         <button
           className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
-          onClick={() => generateReport("PDF")}
+          onClick={generatePDFReport}
         >
           Generate PDF
-        </button>
-        <button
-          className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
-          onClick={() => generateReport("CSV")}
-        >
-          Generate CSV
         </button>
       </div>
     </div>
