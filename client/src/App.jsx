@@ -8,6 +8,14 @@ function App() {
   const [house, setHouse] = useState(null);
   const [items, setItems] = useState([]);
 
+  // Enforce authentication: redirect to login if user is not logged in
+  useEffect(() => {
+    if (!user && view !== "login" && view !== "signup") {
+      setView("login");
+    }
+  }, [user, view]);
+
+  // Fetch items when dashboard is active and a house is selected
   useEffect(() => {
     if (view === "dashboard" && house) {
       fetchItems();
@@ -43,16 +51,15 @@ function App() {
     setView("login");
   };
 
-  const addItem = async (newItem) => {
+  // addItem now expects FormData for file uploads.
+  const addItem = async (formData) => {
     try {
-      const payload = { ...newItem, house };
+      formData.append("house", house);
       const res = await fetch(`${BASE_URL}/items`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: formData,
       });
       const result = await res.json();
-      user;
       if (result.success) {
         fetchItems();
         setView("dashboard");
@@ -66,17 +73,19 @@ function App() {
 
   return (
     <div className="container mx-auto p-4">
-      <Navigation onLogout={handleLogout} setView={setView} />
+      {user && <Navigation onLogout={handleLogout} setView={setView} />}
       {view === "login" && <Login onLogin={handleLogin} setView={setView} />}
       {view === "signup" && <Signup onSignup={handleLogin} setView={setView} />}
-      {view === "selectHouse" && (
+      {view === "selectHouse" && user && (
         <HouseSelection onSelect={handleHouseSelect} />
       )}
-      {view === "dashboard" && <Dashboard house={house} items={items} />}
-      {view === "addItem" && <AddItem addItem={addItem} />}
-      {view === "reports" && <ReportGenerator />}
-      {view === "settings" && <Settings />}
-      {view === "backup" && <Backup />}
+      {view === "dashboard" && user && (
+        <Dashboard house={house} items={items} />
+      )}
+      {view === "addItem" && user && <AddItem addItem={addItem} />}
+      {view === "reports" && user && <ReportGenerator />}
+      {view === "settings" && user && <Settings />}
+      {view === "backup" && user && <Backup />}
     </div>
   );
 }
@@ -176,7 +185,7 @@ function Login({ onLogin, setView }) {
         </button>
       </form>
       <p className="mt-4 text-center">
-        Dont have an account?{" "}
+        Don't have an account?{" "}
         <button
           className="text-blue-500 hover:underline"
           onClick={() => setView("signup")}
@@ -387,27 +396,39 @@ function ItemCard({ item }) {
   );
 }
 
+// Updated AddItem component with custom file upload button using Tailwind CSS.
 function AddItem({ addItem }) {
-  const [item, setItem] = useState({
-    name: "",
-    description: "",
-    category: "",
-    photo: "",
-  });
+  const [item, setItem] = useState({ name: "", description: "", category: "" });
+  const [photoFile, setPhotoFile] = useState(null);
 
   const handleChange = (e) => {
     setItem({ ...item, [e.target.name]: e.target.value });
   };
 
+  const handleFileChange = (e) => {
+    setPhotoFile(e.target.files[0]);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    addItem(item);
+    const formData = new FormData();
+    formData.append("name", item.name);
+    formData.append("description", item.description);
+    formData.append("category", item.category);
+    if (photoFile) {
+      formData.append("photo", photoFile);
+    }
+    addItem(formData);
   };
 
   return (
     <div className="max-w-md mx-auto bg-white shadow-md rounded p-6">
       <h2 className="text-2xl font-bold mb-4">Add New Item</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-4"
+        encType="multipart/form-data"
+      >
         <input
           className="w-full border border-gray-300 p-2 rounded"
           name="name"
@@ -435,15 +456,24 @@ function AddItem({ addItem }) {
           onChange={handleChange}
           required
         />
-        <input
-          className="w-full border border-gray-300 p-2 rounded"
-          name="photo"
-          type="text"
-          placeholder="Photo URL"
-          value={item.photo}
-          onChange={handleChange}
-          required
-        />
+        <div>
+          <label className="cursor-pointer inline-block bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+            Upload Photo
+            <input
+              type="file"
+              name="photo"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="hidden"
+              required
+            />
+          </label>
+          {photoFile && (
+            <p className="mt-2 text-sm text-gray-600">
+              Selected file: {photoFile.name}
+            </p>
+          )}
+        </div>
         <button
           className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
           type="submit"
