@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 
 const BASE_URL = "http://localhost:5000";
 
@@ -52,6 +52,7 @@ function App() {
         body: JSON.stringify(payload),
       });
       const result = await res.json();
+      user;
       if (result.success) {
         fetchItems();
         setView("dashboard");
@@ -175,7 +176,7 @@ function Login({ onLogin, setView }) {
         </button>
       </form>
       <p className="mt-4 text-center">
-        Don't have an account?{" "}
+        Dont have an account?{" "}
         <button
           className="text-blue-500 hover:underline"
           onClick={() => setView("signup")}
