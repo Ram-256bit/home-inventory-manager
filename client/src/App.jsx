@@ -1,27 +1,31 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+
+const BASE_URL = "http://localhost:5000";
 
 function App() {
-  // State for routing between views
   const [view, setView] = useState("login");
   const [user, setUser] = useState(null);
   const [house, setHouse] = useState(null);
-  // Lift items state here so added items appear in the dashboard
-  const [items, setItems] = useState([
-    {
-      id: 1,
-      name: "Sofa",
-      category: "Furniture",
-      description: "Comfortable sofa",
-      photo: "https://via.placeholder.com/100",
-    },
-    {
-      id: 2,
-      name: "TV",
-      category: "Electronics",
-      description: "42 inch TV",
-      photo: "https://via.placeholder.com/100",
-    },
-  ]);
+  const [items, setItems] = useState([]);
+
+  // When the dashboard is active and a house is selected, fetch its items
+  useEffect(() => {
+    if (view === "dashboard" && house) {
+      fetchItems();
+    }
+  }, [view, house]);
+
+  const fetchItems = async () => {
+    try {
+      const res = await fetch(
+        `${BASE_URL}/items?house=${encodeURIComponent(house)}`,
+      );
+      const data = await res.json();
+      setItems(data);
+    } catch (error) {
+      console.error("Error fetching items:", error);
+    }
+  };
 
   const handleLogin = (userData) => {
     setUser(userData);
@@ -36,13 +40,28 @@ function App() {
   const handleLogout = () => {
     setUser(null);
     setHouse(null);
+    setItems([]);
     setView("login");
   };
 
-  // Function to add a new item
-  const addItem = (newItem) => {
-    setItems((prevItems) => [...prevItems, { ...newItem, id: Date.now() }]);
-    setView("dashboard"); // switch back to dashboard after adding
+  const addItem = async (newItem) => {
+    try {
+      const payload = { ...newItem, house };
+      const res = await fetch(`${BASE_URL}/items`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const result = await res.json();
+      if (result.success) {
+        fetchItems();
+        setView("dashboard");
+      } else {
+        alert(result.message || "Error adding item");
+      }
+    } catch (error) {
+      console.error("Error adding item:", error);
+    }
   };
 
   return (
@@ -109,10 +128,24 @@ function Login({ onLogin, setView }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Dummy login logic – replace with real authentication
-    onLogin({ email });
+    try {
+      const res = await fetch(`${BASE_URL}/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        onLogin(data.user);
+      } else {
+        const errData = await res.json();
+        alert(errData.message || "Login failed");
+      }
+    } catch (error) {
+      console.error("Error during login:", error);
+    }
   };
 
   return (
@@ -159,10 +192,24 @@ function Signup({ onSignup, setView }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Dummy signup logic – replace with actual user creation
-    onSignup({ email });
+    try {
+      const res = await fetch(`${BASE_URL}/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        onSignup(data.user);
+      } else {
+        const errData = await res.json();
+        alert(errData.message || "Signup failed");
+      }
+    } catch (error) {
+      console.error("Error during signup:", error);
+    }
   };
 
   return (
@@ -206,9 +253,21 @@ function Signup({ onSignup, setView }) {
 }
 
 function HouseSelection({ onSelect }) {
+  const [houses, setHouses] = useState([]);
   const [selectedHouse, setSelectedHouse] = useState("");
-  // Dummy house data
-  const houses = ["House 1", "House 2", "House 3"];
+
+  useEffect(() => {
+    const fetchHouses = async () => {
+      try {
+        const res = await fetch(`${BASE_URL}/houses`);
+        const data = await res.json();
+        setHouses(data);
+      } catch (error) {
+        console.error("Error fetching houses:", error);
+      }
+    };
+    fetchHouses();
+  }, []);
 
   const handleSelect = () => {
     if (selectedHouse) {
@@ -227,8 +286,8 @@ function HouseSelection({ onSelect }) {
         onChange={(e) => setSelectedHouse(e.target.value)}
       >
         <option value="">Select a house</option>
-        {houses.map((house) => (
-          <option key={house} value={house}>
+        {houses.map((house, index) => (
+          <option key={index} value={house}>
             {house}
           </option>
         ))}
@@ -293,8 +352,8 @@ function CategoryBrowser({ items }) {
         onChange={(e) => setSelectedCategory(e.target.value)}
       >
         <option value="">All Categories</option>
-        {categories.map((category) => (
-          <option key={category} value={category}>
+        {categories.map((category, index) => (
+          <option key={index} value={category}>
             {category}
           </option>
         ))}
@@ -397,9 +456,14 @@ function AddItem({ addItem }) {
 }
 
 function ReportGenerator() {
-  const generateReport = (format) => {
-    // Implement report generation logic (e.g., using a library for PDF/CSV generation)
-    alert(`Report generated in ${format} format!`);
+  const generateReport = async (format) => {
+    try {
+      const res = await fetch(`${BASE_URL}/reports`);
+      const data = await res.json();
+      alert(data.message);
+    } catch (error) {
+      console.error("Error generating report:", error);
+    }
   };
 
   return (
@@ -433,9 +497,15 @@ function Settings() {
 }
 
 function Backup() {
-  const createBackup = () => {
-    // Implement backup logic here
-    alert("Backup created successfully!");
+  const backupData = async () => {
+    try {
+      const res = await fetch(`${BASE_URL}/backup`);
+      const data = await res.json();
+      alert("Backup data retrieved. Check console for details.");
+      console.log(data.backup);
+    } catch (error) {
+      console.error("Error fetching backup:", error);
+    }
   };
 
   return (
@@ -443,7 +513,7 @@ function Backup() {
       <h2 className="text-2xl font-bold mb-4">Create Backup</h2>
       <button
         className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
-        onClick={createBackup}
+        onClick={backupData}
       >
         Backup Now
       </button>
