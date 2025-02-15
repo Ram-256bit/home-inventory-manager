@@ -5,6 +5,23 @@ function App() {
   const [view, setView] = useState("login");
   const [user, setUser] = useState(null);
   const [house, setHouse] = useState(null);
+  // Lift items state here so added items appear in the dashboard
+  const [items, setItems] = useState([
+    {
+      id: 1,
+      name: "Sofa",
+      category: "Furniture",
+      description: "Comfortable sofa",
+      photo: "https://via.placeholder.com/100",
+    },
+    {
+      id: 2,
+      name: "TV",
+      category: "Electronics",
+      description: "42 inch TV",
+      photo: "https://via.placeholder.com/100",
+    },
+  ]);
 
   const handleLogin = (userData) => {
     setUser(userData);
@@ -22,6 +39,12 @@ function App() {
     setView("login");
   };
 
+  // Function to add a new item
+  const addItem = (newItem) => {
+    setItems((prevItems) => [...prevItems, { ...newItem, id: Date.now() }]);
+    setView("dashboard"); // switch back to dashboard after adding
+  };
+
   return (
     <div className="container mx-auto p-4">
       <Navigation onLogout={handleLogout} setView={setView} />
@@ -30,8 +53,8 @@ function App() {
       {view === "selectHouse" && (
         <HouseSelection onSelect={handleHouseSelect} />
       )}
-      {view === "dashboard" && <Dashboard house={house} />}
-      {view === "addItem" && <AddItem />}
+      {view === "dashboard" && <Dashboard house={house} items={items} />}
+      {view === "addItem" && <AddItem addItem={addItem} />}
       {view === "reports" && <ReportGenerator />}
       {view === "settings" && <Settings />}
       {view === "backup" && <Backup />}
@@ -220,25 +243,7 @@ function HouseSelection({ onSelect }) {
   );
 }
 
-function Dashboard({ house }) {
-  // Dummy items for the dashboard
-  const items = [
-    {
-      id: 1,
-      name: "Sofa",
-      category: "Furniture",
-      description: "Comfortable sofa",
-      photo: "https://via.placeholder.com/100",
-    },
-    {
-      id: 2,
-      name: "TV",
-      category: "Electronics",
-      description: "42 inch TV",
-      photo: "https://via.placeholder.com/100",
-    },
-  ];
-
+function Dashboard({ house, items }) {
   return (
     <div>
       <h2 className="text-3xl font-bold mb-4">Dashboard for {house}</h2>
@@ -323,7 +328,7 @@ function ItemCard({ item }) {
   );
 }
 
-function AddItem() {
+function AddItem({ addItem }) {
   const [item, setItem] = useState({
     name: "",
     description: "",
@@ -337,8 +342,7 @@ function AddItem() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Add item logic here (e.g., update state or send to backend)
-    alert("Item added!");
+    addItem(item);
   };
 
   return (
@@ -394,7 +398,7 @@ function AddItem() {
 
 function ReportGenerator() {
   const generateReport = (format) => {
-    // Implement report generation logic here (e.g., using a library for PDF/CSV generation)
+    // Implement report generation logic (e.g., using a library for PDF/CSV generation)
     alert(`Report generated in ${format} format!`);
   };
 
