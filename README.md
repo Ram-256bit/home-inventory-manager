@@ -1,17 +1,3 @@
-<!--toc:start-->
-- [Home Inventory Manager](#home-inventory-manager)
-- [Overview](#overview)
-- [Objective](#objective)
-- [Project Workflow](#project-workflow)
-  - [hello world](#hello-world)
-- [Tech Stack](#tech-stack)
-- [Wireframe diagrams](#wireframe-diagrams)
-  - [Landing Page](#landing-page)
-  - [Login Page](#login-page)
-  - [Signup page](#signup-page)
-  - [List Houses](#list-houses)
-<!--toc:end-->
-
 # Home Inventory Manager
 
 # Overview
